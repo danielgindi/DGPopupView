@@ -3,6 +3,8 @@ DGPopupView
 
 A customizable popup view for iOS / ObjC
 
+This library can work nicely in cooperation with [DGKeyboardScrollHandler](https://github.com/danielgindi/DGKeyboardScrollHandler/) if you wish to have the `DGPopupView` inside a scrollview. This does *not* mean that you have to have `DGKeyboardScrollHandler` in the project - it is weakly linked.
+
 
 This was originally in my other repository https://github.com/danielgindi/drunken-danger-zone/
 
