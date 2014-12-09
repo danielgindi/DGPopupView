@@ -33,7 +33,7 @@
 //  SOFTWARE. 
 //  
 
-#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 typedef enum _DGPopupViewAnimationType
 {
