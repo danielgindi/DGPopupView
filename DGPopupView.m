@@ -3,7 +3,7 @@
 //  DGPopupView
 //
 //  Created by Daniel Cohen Gindi on 10/31/12.
-//  Copyright (c) 2012 AnyGym. All rights reserved.
+//  Copyright (c) 2012 danielgindi@gmail.com. All rights reserved.
 //
 //  https://github.com/danielgindi/DGPopupView
 //
