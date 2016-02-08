@@ -168,7 +168,7 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
 
 - (void)DGPopupView_initialize
 {
-    _hasOverflay = YES;
+    _hasOverlay = YES;
     _closesFromOverlay = YES;
     _popdownAnimation = DGPopupViewAnimationTypeAutomatic;
     _overlayColor = [UIColor colorWithWhite:0.f alpha:.6f];
@@ -232,7 +232,7 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
     
     CGRect availableFrame = parentView.bounds;
     
-    if (self.hasOverflay)
+    if (self.hasOverlay)
     {
         // Set up overlay
         popupOverlayView = [[UIButton alloc] initWithFrame:availableFrame];

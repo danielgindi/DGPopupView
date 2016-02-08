@@ -58,7 +58,7 @@ typedef enum _DGPopupViewAnimationType
 
 + (instancetype)popupFromXib;
 
-@property (nonatomic, assign) BOOL hasOverflay;
+@property (nonatomic, assign) BOOL hasOverlay;
 @property (nonatomic, assign) DGPopupViewAnimationType popdownAnimation;
 @property (nonatomic, assign) BOOL closesFromOverlay;
 @property (nonatomic, assign) BOOL popupInsideScrollView;
