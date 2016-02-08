@@ -8,27 +8,27 @@
 //  https://github.com/danielgindi/DGPopupView
 //
 //  The MIT License (MIT)
-//  
+//
 //  Copyright (c) 2014 Daniel Cohen Gindi (danielgindi@gmail.com)
-//  
+//
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
 //  in the Software without restriction, including without limitation the rights
 //  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 //  copies of the Software, and to permit persons to whom the Software is
 //  furnished to do so, subject to the following conditions:
-//  
+//
 //  The above copyright notice and this permission notice shall be included in all
 //  copies or substantial portions of the Software.
-//  
+//
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 //  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 //  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 //  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 //  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-//  SOFTWARE. 
-//  
+//  SOFTWARE.
+//
 
 #import "DGPopupView.h"
 #import <QuartzCore/QuartzCore.h>
@@ -37,8 +37,7 @@
 {
     UIView *currentParentView;
     UIButton *popupOverlayView;
-    NSObject *keyboardScrollHandler;
-    UIScrollView *scrollView;
+    UIScrollView *_scrollView;
     CGPoint popupPreviousScrollTouchPoint;
     DGPopupViewAnimationType inAnimation;
     BOOL showNextAfterPopdown;
@@ -65,11 +64,11 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
             s_PopupView_Popups = [[NSMutableArray alloc] init];
         }
         [s_PopupView_Popups addObject:@{
-         @"popup": popupView,
-         @"fromView": fromView,
-         @"frame": [NSValue valueWithCGRect:frame],
-         @"animation": @(animationType)
-         }];
+                                        @"popup": popupView,
+                                        @"fromView": fromView,
+                                        @"frame": [NSValue valueWithCGRect:frame],
+                                        @"animation": @(animationType)
+                                        }];
     }
 }
 
@@ -174,15 +173,6 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
     _overlayColor = [UIColor colorWithWhite:0.f alpha:.6f];
 }
 
-- (void)attachAllFieldDelegatesToPopupsScrollView
-{
-    if (keyboardScrollHandler)
-    {
-        SEL selector = sel_registerName("attachAllFieldDelegates");
-        ((void (*)(id, SEL))[keyboardScrollHandler methodForSelector:selector])(keyboardScrollHandler, selector);
-    }
-}
-
 - (id)popupFromView:(UIView *)parentView
 {
     return [self popupFromView:parentView withPopupFrame:CGRectNull animation:DGPopupViewAnimationTypePopup now:NO];
@@ -252,31 +242,18 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
     }
     
     // Set up scrollview
-    if (_popupInsideScrollView)
+    if (_wrapInScrollView)
     {
-        scrollView = [[UIScrollView alloc] initWithFrame:availableFrame];
-        scrollView.contentSize = CGSizeMake(scrollView.contentSize.width, popupFrame.origin.y + popupFrame.size.height);
+        _scrollView = [[UIScrollView alloc] initWithFrame:availableFrame];
+        _scrollView.contentSize = CGSizeMake(_scrollView.contentSize.width, popupFrame.origin.y + popupFrame.size.height);
         
         scrollViewTapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(popupOverlayTouchedUpInside:)];
         scrollViewTapGestureRecognizer.cancelsTouchesInView = NO;
-        [scrollView addGestureRecognizer:scrollViewTapGestureRecognizer];
+        [_scrollView addGestureRecognizer:scrollViewTapGestureRecognizer];
         
-        Class DGKeyboardScrollHandler = NSClassFromString(@"DGKeyboardScrollHandler");
-        if (DGKeyboardScrollHandler)
-        {
-            keyboardScrollHandler = [[DGKeyboardScrollHandler alloc] init];
-            
-            SEL selector = sel_registerName("setScrollView:");
-            ((void (*)(id, SEL, UIScrollView *))[keyboardScrollHandler methodForSelector:selector])(keyboardScrollHandler, selector, scrollView);
-            
-            selector = sel_registerName("setTextFieldDelegate:");
-            ((void (*)(id, SEL, id<UITextFieldDelegate>))[keyboardScrollHandler methodForSelector:selector])(keyboardScrollHandler, selector, _popupTextFieldDelegate);
-            
-            selector = sel_registerName("setTextViewDelegate:");
-            ((void (*)(id, SEL, id<UITextViewDelegate>))[keyboardScrollHandler methodForSelector:selector])(keyboardScrollHandler, selector, _popupTextViewDelegate);
-            
-            [parentView addSubview:scrollView];
-        }
+        [parentView addSubview:_scrollView];
+        
+        parentView = _scrollView;
     }
     
     CAMediaTimingFunction *easeOut = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
@@ -297,7 +274,7 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
         
         // Set up popup
         self.frame = popupFrame;
-        [scrollView?scrollView:parentView addSubview:self];
+        [parentView addSubview:self];
         
         // Set up animation for popup
         
@@ -334,7 +311,7 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
         
         // Set up popup
         self.frame = popupFrame;
-        [scrollView?scrollView:parentView addSubview:self];
+        [parentView addSubview:self];
         
         // Set up animation for popup
         
@@ -354,7 +331,7 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
         
         // Set up popup
         self.frame = popupFrame;
-        [scrollView?scrollView:parentView addSubview:self];
+        [parentView addSubview:self];
         
         [self finishPopup];
         
@@ -400,14 +377,8 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
                 }
             }
         }
-
+        
         return self;
-    }
-    
-    if (keyboardScrollHandler)
-    {
-        SEL selector = sel_registerName("viewWillDisappear");
-        ((void (*)(id, SEL))[keyboardScrollHandler methodForSelector:selector])(keyboardScrollHandler, selector);
     }
     
     DGPopupViewAnimationType animationType = _popdownAnimation;
@@ -425,7 +396,7 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
         if (popupOverlayView)
         {
             CAMediaTimingFunction *easeOut = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
-        
+            
             // Set up animation for overlay
             CABasicAnimation *overlayAnimation = [CABasicAnimation animationWithKeyPath:@"opacity"];
             overlayAnimation.duration = 0.3f;
@@ -513,20 +484,12 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
 
 - (void)didFinishPopup
 {
-    if (keyboardScrollHandler)
-    {
-        SEL selector = sel_registerName("viewDidAppear");
-        ((void (*)(id, SEL))[keyboardScrollHandler methodForSelector:selector])(keyboardScrollHandler, selector);
-    }
+    
 }
 
 - (void)didFinishPopdown
 {
-    if (keyboardScrollHandler)
-    {
-        SEL selector = sel_registerName("viewDidDisappear");
-        ((void (*)(id, SEL))[keyboardScrollHandler methodForSelector:selector])(keyboardScrollHandler, selector);
-    }
+    
 }
 
 - (void)finishPopup
@@ -547,9 +510,8 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
 {
     [popupOverlayView removeFromSuperview];
     popupOverlayView = nil;
-    [scrollView removeFromSuperview];
-    scrollView = nil;
-    keyboardScrollHandler = nil;
+    [_scrollView removeFromSuperview];
+    _scrollView = nil;
     [self removeFromSuperview];
     currentParentView = nil;
     if ([_popupDelegate respondsToSelector:@selector(popupViewDidPopdown:)])
@@ -565,7 +527,7 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
     {
         [self removePopupFromCache:self];
     }
-
+    
     if (showNextAfterPopdown)
     {
         NSDictionary *nextOne = self.currentPopupCache;
@@ -584,29 +546,16 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
     [self didFinishPopdown];
 }
 
-- (void)setPopupTextFieldDelegate:(id<UITextFieldDelegate>)popupTextFieldDelegate
-{
-    _popupTextFieldDelegate = popupTextFieldDelegate;
-    if (keyboardScrollHandler)
-    {
-        SEL selector = sel_registerName("setTextFieldDelegate:");
-        ((void (*)(id, SEL, __weak id<UITextFieldDelegate>))[keyboardScrollHandler methodForSelector:selector])(keyboardScrollHandler, selector, _popupTextFieldDelegate);
-    }
-}
-
-- (void)setPopupTextViewDelegate:(id<UITextViewDelegate>)popupTextViewDelegate
-{
-    _popupTextViewDelegate = popupTextViewDelegate;
-    if (keyboardScrollHandler)
-    {
-        SEL selector = sel_registerName("setTextViewDelegate:");
-        ((void (*)(id, SEL, __weak id<UITextViewDelegate>))[keyboardScrollHandler methodForSelector:selector])(keyboardScrollHandler, selector, _popupTextViewDelegate);
-    }
-}
-
 - (void)popupOverlayTouchedUpInside:(id)sender
 {
     [self popdown];
+}
+
+#pragma mark - Accessors
+
+- (UIScrollView *)scrollViewWrapper
+{
+    return _scrollView;
 }
 
 #pragma mark - Utilities

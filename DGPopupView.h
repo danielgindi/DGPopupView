@@ -11,27 +11,27 @@
 //  https://github.com/danielgindi/DGPopupView
 //
 //  The MIT License (MIT)
-//  
+//
 //  Copyright (c) 2014 Daniel Cohen Gindi (danielgindi@gmail.com)
-//  
+//
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
 //  in the Software without restriction, including without limitation the rights
 //  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 //  copies of the Software, and to permit persons to whom the Software is
 //  furnished to do so, subject to the following conditions:
-//  
+//
 //  The above copyright notice and this permission notice shall be included in all
 //  copies or substantial portions of the Software.
-//  
+//
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 //  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 //  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 //  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 //  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-//  SOFTWARE. 
-//  
+//  SOFTWARE.
+//
 
 #import <UIKit/UIKit.h>
 
@@ -61,15 +61,17 @@ typedef enum _DGPopupViewAnimationType
 @property (nonatomic, assign) BOOL hasOverlay;
 @property (nonatomic, assign) DGPopupViewAnimationType popdownAnimation;
 @property (nonatomic, assign) BOOL closesFromOverlay;
-@property (nonatomic, assign) BOOL popupInsideScrollView;
+
+/* will create a scrollview that fills the parent - and popup inside it */
+@property (nonatomic, assign) BOOL wrapInScrollView;
+
+/* the scrollView the was created if `wrappInScrollView` was specified */
+@property (nonatomic, strong, readonly) UIScrollView *scrollViewWrapper;
+
 @property (nonatomic, strong) UIColor *overlayColor;
-@property (nonatomic, unsafe_unretained) id<DGPopupViewDelegate> popupDelegate;
+@property (nonatomic, weak) id<DGPopupViewDelegate> popupDelegate;
 @property (nonatomic, copy) void (^didPopupBlock)();
 @property (nonatomic, copy) void (^didPopdownBlock)();
-
-/* These are for when popupInsideScrollView is used, and there are textfields that need to be handled when the keyboard scrolls */
-@property (nonatomic, unsafe_unretained) id<UITextFieldDelegate> popupTextFieldDelegate;
-@property (nonatomic, unsafe_unretained) id<UITextViewDelegate> popupTextViewDelegate;
 
 - (id)popupFromView:(UIView*)parentView;
 - (id)popupFromView:(UIView*)parentView now:(BOOL)now;
@@ -83,8 +85,6 @@ typedef enum _DGPopupViewAnimationType
 - (id)popdownShowNext:(BOOL)showNext animated:(BOOL)animated; // If an override needed, override this!
 
 - (CGRect)calculatePopupPositionInsideFrame:(CGRect)parentFrame;
-
-- (void)attachAllFieldDelegatesToPopupsScrollView;
 
 - (void)didFinishPopup;
 - (void)didFinishPopdown;
