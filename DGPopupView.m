@@ -247,7 +247,7 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
         _scrollView = [[UIScrollView alloc] initWithFrame:availableFrame];
         _scrollView.contentSize = CGSizeMake(_scrollView.contentSize.width, popupFrame.origin.y + popupFrame.size.height);
         
-        scrollViewTapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(popupOverlayTouchedUpInside:)];
+        scrollViewTapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(popupOverlayTapRecognized:)];
         scrollViewTapGestureRecognizer.cancelsTouchesInView = NO;
         [_scrollView addGestureRecognizer:scrollViewTapGestureRecognizer];
         
@@ -548,6 +548,16 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
 
 - (void)popupOverlayTouchedUpInside:(id)sender
 {
+    [self popdown];
+}
+
+- (void)popupOverlayTapRecognized:(UITapGestureRecognizer *)recognizer
+{
+    if (CGRectContainsPoint(self.bounds, [recognizer locationInView:self]))
+    {
+        return;
+    }
+    
     [self popdown];
 }
 
