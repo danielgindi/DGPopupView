@@ -175,17 +175,17 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
 
 - (id)popupFromView:(UIView *)parentView
 {
-    return [self popupFromView:parentView withPopupFrame:CGRectNull animation:DGPopupViewAnimationTypePopup now:NO];
+    return [self popupFromView:parentView withPopupFrame:CGRectNull animation:DGPopupViewAnimationTypeScaleIn now:NO];
 }
 
 - (id)popupFromView:(UIView *)parentView now:(BOOL)now
 {
-    return [self popupFromView:parentView withPopupFrame:CGRectNull animation:DGPopupViewAnimationTypePopup now:now];
+    return [self popupFromView:parentView withPopupFrame:CGRectNull animation:DGPopupViewAnimationTypeScaleIn now:now];
 }
 
 - (id)popupFromView:(UIView *)parentView withPopupFrame:(CGRect)popupFrame
 {
-    return [self popupFromView:parentView withPopupFrame:popupFrame animation:DGPopupViewAnimationTypePopup now:NO];
+    return [self popupFromView:parentView withPopupFrame:popupFrame animation:DGPopupViewAnimationTypeScaleIn now:NO];
 }
 
 - (id)popupFromView:(UIView* )parentView withPopupFrame:(CGRect)popupFrame animation:(DGPopupViewAnimationType)animation
@@ -258,7 +258,7 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
     
     CAMediaTimingFunction *easeOut = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
     
-    if (animation == DGPopupViewAnimationTypePopup)
+    if (animation != DGPopupViewAnimationTypeNone)
     {
         if (popupOverlayView)
         {
@@ -271,7 +271,47 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
             
             [popupOverlayView.layer addAnimation:overlayAnimation forKey:@"popup"];
         }
+    }
+    
+    if (animation == DGPopupViewAnimationTypeScaleIn)
+    {
+        // Set up popup
+        self.frame = popupFrame;
+        [parentView addSubview:self];
         
+        // Set up animation for popup
+        
+        CAKeyframeAnimation *popupAnimation = [CAKeyframeAnimation animationWithKeyPath:@"transform.scale"];
+        popupAnimation.duration = .15f;
+        popupAnimation.values = @[@.001f, @1.f];
+        popupAnimation.keyTimes = @[@0.f, @1.f];
+        popupAnimation.timingFunctions = @[easeOut];
+        popupAnimation.fillMode = kCAFillModeBoth;
+        popupAnimation.delegate = self;
+        popupAnimation.removedOnCompletion = NO; // So we can keep track of it in animationDidStop:finished:
+        
+        self.layer.transform = CATransform3DIdentity;
+        [self.layer addAnimation:popupAnimation forKey:@"popup"];
+    }
+    else if (animation == DGPopupViewAnimationTypeFadeIn)
+    {
+        // Set up popup
+        self.frame = popupFrame;
+        [parentView addSubview:self];
+        
+        // Set up animation for popup
+        
+        CGFloat alpha = self.alpha;
+        self.alpha = 0.f;
+        
+        [UIView animateWithDuration:0.4 delay:0.0 options:UIViewAnimationOptionCurveEaseOut animations:^{
+            self.alpha = alpha;
+        } completion:^(BOOL finished) {
+            [self finishPopup];
+        }];
+    }
+    else if (animation == DGPopupViewAnimationTypePopup)
+    {
         // Set up popup
         self.frame = popupFrame;
         [parentView addSubview:self];
@@ -295,20 +335,9 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
         self.layer.transform = CATransform3DIdentity;
         [self.layer addAnimation:popupAnimation forKey:@"popup"];
     }
-    else if (animation == DGPopupViewAnimationTypeTopBottom || animation == DGPopupViewAnimationTypeBottomTop)
+    else if (animation == DGPopupViewAnimationTypeTopBottom ||
+             animation == DGPopupViewAnimationTypeBottomTop)
     {
-        if (popupOverlayView)
-        {
-            // Set up animation for overlay
-            CABasicAnimation *overlayAnimation = [CABasicAnimation animationWithKeyPath:@"opacity"];
-            overlayAnimation.duration = 0.3f;
-            overlayAnimation.timingFunction = easeOut;
-            overlayAnimation.fromValue = @0.f;
-            overlayAnimation.toValue = @(popupOverlayView.layer.opacity);
-            
-            [popupOverlayView.layer addAnimation:overlayAnimation forKey:@"popup"];
-        }
-        
         // Set up popup
         self.frame = popupFrame;
         [parentView addSubview:self];
@@ -391,7 +420,7 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
         animationType = DGPopupViewAnimationTypeNone;
     }
     
-    if (animationType == DGPopupViewAnimationTypePopup)
+    if (animationType != DGPopupViewAnimationTypeNone)
     {
         if (popupOverlayView)
         {
@@ -407,7 +436,40 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
             popupOverlayView.layer.opacity = 0.f;
             [popupOverlayView.layer addAnimation:overlayAnimation forKey:@"popdown"];
         }
+    }
+    
+    if (animationType == DGPopupViewAnimationTypeScaleIn)
+    {
+        CAMediaTimingFunction *easeOut = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
         
+        // Set up animation for popup
+        
+        CABasicAnimation* popdownAnimation = [CABasicAnimation animationWithKeyPath:@"transform"];
+        popdownAnimation.fromValue = [NSValue valueWithCATransform3D:CATransform3DIdentity];
+        popdownAnimation.toValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(0.001, 0.f, 1.0)];
+        popdownAnimation.duration = .2f;
+        popdownAnimation.timingFunction = easeOut;
+        popdownAnimation.fillMode = kCAFillModeBoth;
+        popdownAnimation.delegate = self;
+        popdownAnimation.removedOnCompletion = NO; // So we can keep track of it in animationDidStop:finished:
+        
+        self.layer.transform = CATransform3DMakeScale(0.f, 0.f, 1.f);
+        [self.layer addAnimation:popdownAnimation forKey:@"popdown"];
+    }
+    else if (animationType == DGPopupViewAnimationTypeFadeIn)
+    {
+        // Set up animation for popup
+        
+        [UIView animateWithDuration:0.2 delay:0.0 options:UIViewAnimationOptionCurveEaseOut animations:^{
+            self.alpha = 0.f;
+        } completion:^(BOOL finished) {
+            
+            [self finishPopdown];
+            
+        }];
+    }
+    else if (animationType == DGPopupViewAnimationTypePopup)
+    {
         // Set up animation for popup
         
         CAMediaTimingFunction *overShoot = [CAMediaTimingFunction functionWithControlPoints:0.15:-0.30:0.88:0.14];
@@ -425,23 +487,9 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
         self.layer.transform = CATransform3DMakeScale(0.f, 0.f, 1.f);
         [self.layer addAnimation:popdownAnimation forKey:@"popdown"];
     }
-    else if (animationType == DGPopupViewAnimationTypeTopBottom || animationType == DGPopupViewAnimationTypeBottomTop)
+    else if (animationType == DGPopupViewAnimationTypeTopBottom ||
+             animationType == DGPopupViewAnimationTypeBottomTop)
     {
-        if (popupOverlayView)
-        {
-            CAMediaTimingFunction *easeOut = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
-            
-            // Set up animation for overlay
-            CABasicAnimation *overlayAnimation = [CABasicAnimation animationWithKeyPath:@"opacity"];
-            overlayAnimation.duration = 0.3f;
-            overlayAnimation.timingFunction = easeOut;
-            overlayAnimation.fromValue = @(popupOverlayView.layer.opacity);
-            overlayAnimation.toValue = @0.f;
-            
-            popupOverlayView.layer.opacity = 0.f;
-            [popupOverlayView.layer addAnimation:overlayAnimation forKey:@"popdown"];
-        }
-        
         // Set up animation for popup
         
         CGRect fromFrame = self.frame;
