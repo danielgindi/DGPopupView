@@ -33,7 +33,7 @@
 #import "DGPopupView.h"
 #import <QuartzCore/QuartzCore.h>
 
-@interface DGPopupView ()
+@interface DGPopupView () <UIGestureRecognizerDelegate>
 {
     UIView *currentParentView;
     UIButton *popupOverlayView;
@@ -249,6 +249,7 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
         
         scrollViewTapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(popupOverlayTapRecognized:)];
         scrollViewTapGestureRecognizer.cancelsTouchesInView = NO;
+        scrollViewTapGestureRecognizer.delegate = self;
         [_scrollView addGestureRecognizer:scrollViewTapGestureRecognizer];
         
         [parentView addSubview:_scrollView];
@@ -607,6 +608,13 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
     }
     
     [self popdown];
+}
+
+#pragma mark - UIGestureRecognizerDelegate
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
+{
+    return YES;
 }
 
 #pragma mark - Accessors
