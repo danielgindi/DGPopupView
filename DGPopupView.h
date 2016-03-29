@@ -40,6 +40,8 @@ typedef enum _DGPopupViewAnimationType
     DGPopupViewAnimationTypeNone,
     DGPopupViewAnimationTypeAutomatic,
     DGPopupViewAnimationTypePopup,
+    DGPopupViewAnimationTypeScaleIn,
+    DGPopupViewAnimationTypeFadeIn,
     DGPopupViewAnimationTypeTopBottom,
     DGPopupViewAnimationTypeBottomTop
 } DGPopupViewAnimationType;
