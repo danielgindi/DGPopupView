@@ -2,7 +2,6 @@
 //  DGPopupView.m
 //  DGPopupView
 //
-//  Created by Daniel Cohen Gindi on 10/31/12.
 //  Copyright (c) 2012 danielgindi@gmail.com. All rights reserved.
 //
 //  https://github.com/danielgindi/DGPopupView
@@ -288,7 +287,6 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
         popupAnimation.keyTimes = @[@0.f, @1.f];
         popupAnimation.timingFunctions = @[easeOut];
         popupAnimation.fillMode = kCAFillModeBoth;
-        popupAnimation.delegate = self;
         popupAnimation.removedOnCompletion = NO; // So we can keep track of it in animationDidStop:finished:
         
         self.layer.transform = CATransform3DIdentity;
@@ -330,7 +328,6 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
         popupAnimation.keyTimes = @[@0.f, @0.4f, @0.7f, @1.f];
         popupAnimation.timingFunctions = @[overShoot, easeOut, overShoot];
         popupAnimation.fillMode = kCAFillModeBoth;
-        popupAnimation.delegate = self;
         popupAnimation.removedOnCompletion = NO; // So we can keep track of it in animationDidStop:finished:
         
         self.layer.transform = CATransform3DIdentity;
@@ -451,7 +448,6 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
         popdownAnimation.duration = .2f;
         popdownAnimation.timingFunction = easeOut;
         popdownAnimation.fillMode = kCAFillModeBoth;
-        popdownAnimation.delegate = self;
         popdownAnimation.removedOnCompletion = NO; // So we can keep track of it in animationDidStop:finished:
         
         self.layer.transform = CATransform3DMakeScale(0.f, 0.f, 1.f);
@@ -482,7 +478,6 @@ static NSString *s_DGPopupView_syncObject = @"DGPopupView_syncObject";
         popdownAnimation.duration = .2f;
         popdownAnimation.timingFunction = overShoot;
         popdownAnimation.fillMode = kCAFillModeBoth;
-        popdownAnimation.delegate = self;
         popdownAnimation.removedOnCompletion = NO; // So we can keep track of it in animationDidStop:finished:
         
         self.layer.transform = CATransform3DMakeScale(0.f, 0.f, 1.f);
