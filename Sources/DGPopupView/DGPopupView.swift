@@ -35,60 +35,49 @@
 import Foundation
 import UIKit
 
-enum DGPopupViewAnimation
+public protocol DGPopupViewDelegate: AnyObject
 {
-    case none
-    case automatic
-    case popup
-    case scaleIn
-    case fadeIn
-    case topBottom
-    case bottomTop
+    func popupViewDidPopup(_ popupView: DGPopupView?)
+    func popupViewDidPopdown(_ popupView: DGPopupView?)
 }
 
-@objc protocol DGPopupViewDelegate: NSObjectProtocol
-{
-    @objc optional func popupViewDidPopup(_ popupView: DGPopupView?)
-    @objc optional func popupViewDidPopdown(_ popupView: DGPopupView?)
-}
-
-class DGPopupView: UIView, UIGestureRecognizerDelegate, CAAnimationDelegate
+open class DGPopupView: UIView, UIGestureRecognizerDelegate, CAAnimationDelegate
 {
     private weak var currentParentView: UIView? = nil
     private var popupOverlayView: UIButton? = nil
     private var popupPreviousScrollTouchPoint: CGPoint? = nil
-    private var inAnimation: DGPopupViewAnimation = .scaleIn
+    private var inAnimation: Animation = .scaleIn
     private var showNextAfterPopdown: Bool = false
     
     private static var s_PopupView_Popups: [[String: Any?]] = []
     
-    var hasOverlay = true
-    var popdownAnimation: DGPopupViewAnimation = .automatic
-    var closesFromOverlay = true
-    var considerSafeAreaInsets = true
+    open var hasOverlay = true
+    open var popdownAnimation: Animation = .automatic
+    open var closesFromOverlay = true
+    open var considerSafeAreaInsets = true
     
     /** will create a scrollview that fills the parent - and popup inside it */
-    var wrapInScrollView = false
+    open var wrapInScrollView = false
     
     /** the scrollView the was created if `wrappInScrollView` was specified */
-    private(set) var scrollViewWrapper: UIScrollView?
+    private(set) open var scrollViewWrapper: UIScrollView?
     
-    var overlayColor: UIColor?
-    weak var popupDelegate: DGPopupViewDelegate?
+    open var overlayColor: UIColor?
+    open weak var popupDelegate: DGPopupViewDelegate?
     
-    var didPopupBlock: (() -> Void)?
-    var didPopdownBlock: (() -> Void)?
+    open var didPopupBlock: (() -> Void)?
+    open var didPopdownBlock: (() -> Void)?
     
     /**
      affects the auto-calculated popup position. { 0.5, 0.5 } means centered.
      @default: { 0.5, 0.5 }
      */
-    var popupRelativePosition = CGPoint(x: 0.5, y: 0.5)
+    open var popupRelativePosition = CGPoint(x: 0.5, y: 0.5)
     
     // MARK: - Init
     
     @discardableResult
-    class func popupFromXib() -> Self?
+    open class func popupFromXib() -> Self?
     {
         guard let views = Bundle.main.loadNibNamed(
                 String(describing: self),
@@ -104,13 +93,13 @@ class DGPopupView: UIView, UIGestureRecognizerDelegate, CAAnimationDelegate
         return nil
     }
     
-    override init(frame: CGRect)
+    public override init(frame: CGRect)
     {
         super.init(frame: frame)
         initialize()
     }
     
-    required init?(coder: NSCoder)
+    public required init?(coder: NSCoder)
     {
         super.init(coder: coder)
         initialize()
@@ -139,7 +128,7 @@ class DGPopupView: UIView, UIGestureRecognizerDelegate, CAAnimationDelegate
     
     // MARK: - UIView methods
     
-    override func willMove(toWindow newWindow: UIWindow?)
+    open override func willMove(toWindow newWindow: UIWindow?)
     {
         if newWindow == nil
         {
@@ -149,7 +138,7 @@ class DGPopupView: UIView, UIGestureRecognizerDelegate, CAAnimationDelegate
     
     // MARK: - Public methods
     
-    func calculatePopupPosition(in frame: CGRect) -> CGRect
+    open func calculatePopupPosition(in frame: CGRect) -> CGRect
     {
         var popupFrame = self.frame
         popupFrame.origin.x = frame.origin.x + (frame.size.width - popupFrame.size.width) * popupRelativePosition.x
@@ -158,7 +147,7 @@ class DGPopupView: UIView, UIGestureRecognizerDelegate, CAAnimationDelegate
     }
     
     @discardableResult
-    func popup(from parentView: UIView, popupFrame: CGRect = .null, animation: DGPopupViewAnimation = .automatic, now: Bool = false) -> Any?
+    open func popup(from parentView: UIView, popupFrame: CGRect = .null, animation: Animation = .automatic, now: Bool = false) -> Any?
     {
         var parentView = parentView
         var animation = animation
@@ -358,7 +347,7 @@ class DGPopupView: UIView, UIGestureRecognizerDelegate, CAAnimationDelegate
     }
     
     @discardableResult
-    func popdown(showNext: Bool = true, animated: Bool = true) -> Self
+    open func popdown(showNext: Bool = true, animated: Bool = true) -> Self
     {
         showNextAfterPopdown = showNext
         
@@ -479,12 +468,41 @@ class DGPopupView: UIView, UIGestureRecognizerDelegate, CAAnimationDelegate
         }
         return self
     }
+
+    @objc func popupOverlayTouchedUpInside(_ sender: Any?)
+    {
+        let _ = popdown()
+    }
+
+    @objc func popupOverlayTapRecognized(_ recognizer: UITapGestureRecognizer?)
+    {
+        if bounds.contains(recognizer?.location(in: self) ?? CGPoint.zero)
+        {
+            return
+        }
+
+        let _ = popdown()
+    }
     
-    func finishPopup()
+    /** this method does nothing and is called when popup is showing and done animating */
+    open func didFinishPopup()
+    {
+        // for subclassing
+    }
+    
+    /** this method does nothing and is called when popup is hidden and done animating */
+    open func didFinishPopdown()
+    {
+        // for subclassing
+    }
+    
+    // MARK: - Private methods
+    
+    private func finishPopup()
     {
         didFinishPopup()
 
-        popupDelegate?.popupViewDidPopup?(self)
+        popupDelegate?.popupViewDidPopup(self)
     
         if let didPopupBlock = didPopupBlock
         {
@@ -492,7 +510,7 @@ class DGPopupView: UIView, UIGestureRecognizerDelegate, CAAnimationDelegate
         }
     }
 
-    func finishPopdown()
+    private func finishPopdown()
     {
         popupOverlayView?.removeFromSuperview()
         popupOverlayView = nil
@@ -501,7 +519,7 @@ class DGPopupView: UIView, UIGestureRecognizerDelegate, CAAnimationDelegate
         removeFromSuperview()
         currentParentView = nil
         
-        popupDelegate?.popupViewDidPopdown?(self)
+        popupDelegate?.popupViewDidPopdown(self)
         
         if let didPopdownBlock = didPopdownBlock
         {
@@ -520,35 +538,6 @@ class DGPopupView: UIView, UIGestureRecognizerDelegate, CAAnimationDelegate
 
         didFinishPopdown()
     }
-
-    @objc func popupOverlayTouchedUpInside(_ sender: Any?)
-    {
-        let _ = popdown()
-    }
-
-    @objc func popupOverlayTapRecognized(_ recognizer: UITapGestureRecognizer?)
-    {
-        if bounds.contains(recognizer?.location(in: self) ?? CGPoint.zero)
-        {
-            return
-        }
-
-        let _ = popdown()
-    }
-    
-    /** this method does nothing and is called when popup is showing and done animating */
-    func didFinishPopup()
-    {
-        // for subclassing
-    }
-    
-    /** this method does nothing and is called when popup is hidden and done animating */
-    func didFinishPopdown()
-    {
-        // for subclassing
-    }
-    
-    // MARK: - Private methods
     
     private func dequeueNext()
     {
@@ -565,7 +554,7 @@ class DGPopupView: UIView, UIGestureRecognizerDelegate, CAAnimationDelegate
         let _ = (nextOne["popup"] as? DGPopupView)?
             .popup(from: nextOne["fromView"] as! UIView,
                    popupFrame: nextOne["frame"] as? CGRect ?? .null,
-                   animation: nextOne["animation"] as? DGPopupViewAnimation ?? .automatic,
+                   animation: nextOne["animation"] as? Animation ?? .automatic,
                    now: false
             )
     }
@@ -573,7 +562,7 @@ class DGPopupView: UIView, UIGestureRecognizerDelegate, CAAnimationDelegate
     private func addNextPopup(
         fromView: UIView,
         frame: CGRect,
-        animation: DGPopupViewAnimation)
+        animation: Animation)
     {
         DGPopupView.s_PopupView_Popups.append([
             "popup": self,
@@ -583,7 +572,7 @@ class DGPopupView: UIView, UIGestureRecognizerDelegate, CAAnimationDelegate
         ])
     }
 
-    func removePopupFromCache()
+    private func removePopupFromCache()
     {
         for i in (0..<DGPopupView.s_PopupView_Popups.count).reversed()
         {
@@ -595,25 +584,25 @@ class DGPopupView: UIView, UIGestureRecognizerDelegate, CAAnimationDelegate
         }
     }
 
-    func isInCache() -> Bool
+    private func isInCache() -> Bool
     {
         return DGPopupView.s_PopupView_Popups
             .contains(where: { $0["popup"] as? DGPopupView == self })
     }
 
-    func currentPopup() -> DGPopupView?
+    private func currentPopup() -> DGPopupView?
     {
         return currentPopupCache()?["popup"] as? DGPopupView
     }
 
-    func currentPopupCache() -> [String: Any?]?
+    private func currentPopupCache() -> [String: Any?]?
     {
         return DGPopupView.s_PopupView_Popups.first
     }
     
     // MARK: - CAAnimationDelegate
     
-    internal func animationDidStop(_ anim: CAAnimation, finished flag: Bool)
+    open func animationDidStop(_ anim: CAAnimation, finished flag: Bool)
     {
         if anim == self.layer.animation(forKey: "popup")
         {
@@ -629,9 +618,22 @@ class DGPopupView: UIView, UIGestureRecognizerDelegate, CAAnimationDelegate
     
     // MaRK: - UIGestureRecognizerDelegate
     
-    internal func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+    open func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
                            shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool
     {
         return true
+    }
+    
+    // MARK: - Types
+    
+    public enum Animation : Int
+    {
+        case none
+        case automatic
+        case popup
+        case scaleIn
+        case fadeIn
+        case topBottom
+        case bottomTop
     }
 }
